@@ -1,6 +1,8 @@
 from io import StringIO
 from collections import namedtuple
 
+# === Parser ===
+
 # A parser for first order logic (FOL).
 
 # term ::= <variable>   (starts with lower alphabet)
@@ -190,6 +192,8 @@ def parse(text):
         raise InvalidSyntax('Unexpected token: {}'.format(tokens[0]))
     return f
 
+# === Pretty Printing ===
+
 def formula_to_s(f):
     sio = StringIO()
     print_formula(sio, f)
@@ -271,6 +275,8 @@ Imply.__repr__ = formula_to_s
 Equiv.__repr__ = formula_to_s
 Atom.__repr__ = formula_to_s
 Apply.__repr__ = formula_to_s
+
+# === Utilities ===
 
 if __name__=='__main__':
     print(parse('forall x (Smokes(x) => Cancer(x))'))
