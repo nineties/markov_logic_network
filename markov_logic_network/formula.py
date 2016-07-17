@@ -274,6 +274,17 @@ Apply.__repr__ = formula_to_s
 
 # === Utilities ===
 
+# Evaluate variables or function calls with given assignments.
+# args: a map from variables to constants
+def eval_atom(atom, env):
+    return Atom(atom.pred, [eval_term(t, env) for t in atom.args])
+
+def eval_term(term, env):
+    if isinstance(term, str):
+        return env[term] if is_variable(term) else term
+    else:
+        raise Exception('evaluation of function calls is not implemented')
+
 if __name__=='__main__':
     print(parse('forall x (Smokes(x) => Cancer(x))'))
     print(parse('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))'))
