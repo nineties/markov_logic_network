@@ -36,11 +36,15 @@ class MarkovLogicNetwork(object):
             self.clauses.extend(cnf.translate(f, w, self.constants))
 
         self.predicates = predicates(self.clauses)
-        self.nodes = ground_atoms(self.predicates, self.constants)
-        print(self.nodes)
 
     def __str__(self):
         return '\n'.join('{}: {}'.format(f, w) for f, w in self.formulas)
+
+    def ground_atoms(self):
+        return ground_atoms(self.predicates, self.constants)
+
+    def ground_clauses(self):
+        print(self.clauses)
 
     def query(self, f1, f2, method='exact'):
         f1 = parse(f1)
