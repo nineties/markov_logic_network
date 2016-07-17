@@ -11,10 +11,8 @@ class InvalidModel(Exception):
 
 def predicates(clauses):
     atoms = {}  # a map from predicates to their arity.
-    for clause, _ in clauses:
+    for clause, _, _, _ in clauses:
         for f in clause:
-            if isinstance(f, Not):
-                f = f.f
             if f.pred in atoms and atoms[f.pred] != len(f.args):
                 raise InvalidLogicalForm('Arity of {} mismatch'.format(f.pred))
             atoms[f.pred] = len(f.args)

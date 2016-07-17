@@ -2,6 +2,18 @@ from parser import *
 from itertools import product
 from functools import reduce
 
+# == Representation of weighted clauses ==
+# A clause is a 4-tuple (atom, neg, xs, weight)
+# atom is a list of atomic formulas in the clause.
+# neg is a list of booleans which represents negation.
+# a negation operator is applied to atom[i] iff neg[i] == True.
+# xs is a list of free variables appeared in the clause.
+# Example:
+# a weighted clause "not P(x) or Q(y, A): 1.0"
+# corresponds to a tuple
+# ([P(x), Q(y, A)], [True, False], ['x', 'y'], 1.0)
+
+
 class InvalidFormula(Exception):
     'Invalid Logical Formula'
 
@@ -12,7 +24,7 @@ def translate(f, w, C):
     f = remove_exists(f, C)
     f = remove_forall(f)
     clauses = move_and(f)
-    return [(c, w/len(clauses)) for c in clauses]
+    return [(*encode(c), w/len(clauses)) for c in clauses]
 
 # Remove => and <=>
 def remove_arrows(f):
@@ -124,3 +136,24 @@ def move_and(f):
     else:
         assert(isinstance(f, Atom) or isinstance(f, Not))
         return [[f]]
+
+def add_vars(s, term):
+    if isinstance(term, str):
+        if is_variable(term):
+            s.add(term)
+    else:
+        assert(isinstance(term, Apply))
+        for t in term.args:
+            add_vars(s, t)
+
+def encode(clause):
+    atoms = [None] * len(clause)
+    neg = [False] * len(clause)
+    xs = set([])
+    for i, form in enumerate(clause):
+        neg[i] = isinstance(form, Not)
+        atoms[i] = form.f if neg[i] else form
+        args = form.f.args if neg[i] else form.args
+        for a in args:
+            add_vars(xs, a)
+    return atoms, neg, list(xs)
