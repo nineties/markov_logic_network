@@ -125,7 +125,7 @@ def remove_forall(f):
         assert(isinstance(f, Atom) or isinstance(f, Not))
         return f
 
-# Move conjunction operator outisde
+# Move conjunction operator toward outside.
 # The output is a list (conjuctions) of lists (disjunctions)
 def move_and(f):
     if isinstance(f, And):
