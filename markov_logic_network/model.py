@@ -20,7 +20,7 @@ def predicates(clauses):
 
 def ground_atoms(predicates, constants):
     return [
-        Atom(pred, list(args))
+        Atom(pred, args)
         for pred, arity in predicates.items()
         for args in product(constants, repeat=arity)
         ]

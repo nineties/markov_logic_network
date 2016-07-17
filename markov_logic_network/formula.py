@@ -106,7 +106,7 @@ def parse_term(tokens):
             args.append(parse_term(tokens))
             if lookahead(tokens) == ')':
                 tokens.pop(0)
-                return Apply(x, args)
+                return Apply(x, tuple(args))
             expect(tokens, ',')
     else:
         return x
@@ -122,7 +122,7 @@ def parse_atomic(tokens):
         args.append(parse_term(tokens))
         if lookahead(tokens) == ')':
             tokens.pop(0)
-            return Atom(p, args)
+            return Atom(p, tuple(args))
         expect(tokens, ',')
 
 def parse_variables(tokens):
@@ -134,7 +134,7 @@ def parse_variables(tokens):
             break
     if not xs:
         raise InvalidSyntax('Variables are required: {}'.format(lookahead(tokens)))
-    return xs
+    return tuple(xs)
 
 def parse_formula1(tokens):
     t = lookahead(tokens)

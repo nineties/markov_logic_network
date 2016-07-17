@@ -55,7 +55,7 @@ def uniquify(f, i, d):
     elif isinstance(f, And) or isinstance(f, Or):
         return f.__class__(uniquify(f.f1, i, d), uniquify(f.f2, i, d))
     elif isinstance(f, Atom):
-        return Atom(f.pred, [rename_term(t, d) for t in f.args])
+        return Atom(f.pred, tuple(rename_term(t, d) for t in f.args))
     return f
 
 def rename(f, d):
@@ -67,14 +67,14 @@ def rename(f, d):
         return f.__class__(rename(f.f1, d), rename(f.f2, d))
     else:
         assert(isinstance(f, Atom))
-        return Atom(f.pred, [rename_term(t, d) for t in f.args])
+        return Atom(f.pred, tuple(rename_term(t, d) for t in f.args))
 
 def rename_term(t, d):
     if isinstance(t, str):
         return d.get(t, t)
     else:
         assert(isinstance(t, Apply))
-        return Apply(t.fun, [rename_term(t, d) for t in t.args])
+        return Apply(t.fun, tuple(rename_term(t, d) for t in t.args))
 
 # Move negation inwards
 def move_neg(f):
@@ -156,4 +156,4 @@ def encode(clause):
         args = form.f.args if neg[i] else form.args
         for a in args:
             add_vars(xs, a)
-    return atoms, neg, list(xs)
+    return atoms, neg, tuple(xs)
