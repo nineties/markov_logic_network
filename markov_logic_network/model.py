@@ -1,6 +1,7 @@
-from parser import *
 from itertools import product
+from parser import *
 import cnf
+import inference
 
 class InvalidLogicalForm(Exception):
     'Invaalid Logical Form Error'
@@ -41,9 +42,10 @@ class MarkovLogicNetwork(object):
     def __str__(self):
         return '\n'.join('{}: {}'.format(f, w) for f, w in self.formulas)
 
-    def query(self, f1, f2):
+    def query(self, f1, f2, method='exact'):
         f1 = parse(f1)
         f2 = parse(f2)
+        return inference.methods[method](self, f1, f2)
 
 if __name__ == '__main__':
     mln = MarkovLogicNetwork(
