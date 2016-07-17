@@ -73,8 +73,8 @@ def rename_term(t, d):
     if isinstance(t, str):
         return d.get(t, t)
     else:
-        assert(isinstance(f, Apply))
-        return Apply(f.fun, [rename_term(t, d) for t in f.args])
+        assert(isinstance(t, Apply))
+        return Apply(t.fun, [rename_term(t, d) for t in t.args])
 
 # Move negation inwards
 def move_neg(f):
