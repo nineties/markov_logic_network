@@ -52,7 +52,12 @@ class MarkovLogicNetwork(object):
         return ground_atoms(self.predicates, self.constants)
 
     def ground_clauses(self):
-        print(self.clauses)
+        return [
+            (eval_atom(atom, dict(zip(xs, cs))), neg, [], w)
+            for atoms, neg, xs, w in self.clauses
+            for cs in product(self.constants, repeat=len(xs))
+            for atom in atoms
+            ]
 
     def query(self, f1, f2, method='exact'):
         f1 = parse(f1)
