@@ -6,6 +6,9 @@ import inference
 class InvalidLogicalForm(Exception):
     'Invaalid Logical Form Error'
 
+class InvalidModel(Exception):
+    'Invalid Markov Logic Network Model'
+
 def predicates(clauses):
     atoms = {}  # a map from predicates to their arity.
     for clause, _ in clauses:
@@ -24,10 +27,17 @@ def ground_atoms(predicates, constants):
         for args in product(constants, repeat=arity)
         ]
 
+def check_constants(constants):
+    for c in constants:
+        if not is_constant(c):
+            raise InvalidModel('{} is not a valid constant'.format(c))
+
 class MarkovLogicNetwork(object):
     def __init__(self, formulas, constants):
         # Parse formulas
         self.formulas = [(parse(f), w) for f, w in formulas]
+
+        check_constants(constants)
         self.constants = constants
 
         # Convert formulas to conjunctive normal forms (clausal forms)
