@@ -55,10 +55,10 @@ class MarkovLogicNetwork(object):
 
     def ground_clauses(self):
         return [
-            (eval_atom(atom, dict(zip(xs, cs)), self.functions), neg, [], w)
+            ([eval_atom(atom, dict(zip(xs, cs)), self.functions) for atom in atoms],
+                neg, [], w)
             for atoms, neg, xs, w in self.clauses
             for cs in product(self.constants, repeat=len(xs))
-            for atom in atoms
             ]
 
     def query(self, f1, f2, method='exact'):
