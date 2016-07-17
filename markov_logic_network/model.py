@@ -1,13 +1,49 @@
-import parser
+from parser import *
+from itertools import product
 import cnf
+
+class InvalidLogicalForm(Exception):
+    'Invaalid Logical Form Error'
+
+def predicates(clauses):
+    atoms = {}  # a map from predicates to their arity.
+    for clause, _ in clauses:
+        for f in clause:
+            if isinstance(f, Not):
+                f = f.f
+            if f.pred in atoms and atoms[f.pred] != len(f.args):
+                raise InvalidLogicalForm('Arity of {} mismatch'.format(f.pred))
+            atoms[f.pred] = len(f.args)
+    return atoms
+
+def ground_atoms(predicates, constants):
+    return [
+        Atom(pred, list(args))
+        for pred, arity in predicates.items()
+        for args in product(constants, repeat=arity)
+        ]
 
 class MarkovLogicNetwork(object):
     def __init__(self, formulas, constants):
-        self.formulas = [(parser.parse(f), w) for f, w in formulas]
+        # Parse formulas
+        self.formulas = [(parse(f), w) for f, w in formulas]
         self.constants = constants
+
+        # Convert formulas to conjunctive normal forms (clausal forms)
+        self.clauses = []
+        for f, w in self.formulas:
+            self.clauses.extend(cnf.translate(f, w, self.constants))
+
+        self.predicates = predicates(self.clauses)
+        self.nodes = ground_atoms(self.predicates, self.constants)
+        print(self.nodes)
 
     def __str__(self):
         return '\n'.join('{}: {}'.format(f, w) for f, w in self.formulas)
+
+    def query(self, f1, f2):
+        f1 = parse(f1)
+        f2 = parse(f2)
 
 if __name__ == '__main__':
     mln = MarkovLogicNetwork(
@@ -16,6 +52,7 @@ if __name__ == '__main__':
                 ('forall x (not exists y Friends(x, y) => Smokes(x))', 2.3),
                 ('forall x (Smokes(x) => Cancer(x))', 1.5),
                 ('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))', 2.2)],
-            constants = ['A', 'B']
+            constants = ['Anna', 'Bob']
             )
-    print(mln)
+
+    print(mln.query('Cancer(Anna)', 'Smokes(Bob)'))
