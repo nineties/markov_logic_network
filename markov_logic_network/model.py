@@ -31,12 +31,14 @@ def check_constants(constants):
             raise InvalidModel('{} is not a valid constant'.format(c))
 
 class MarkovLogicNetwork(object):
-    def __init__(self, formulas, constants):
+    def __init__(self, formulas, constants, functions={}):
         # Parse formulas
         self.formulas = [(parse(f), w) for f, w in formulas]
 
         check_constants(constants)
         self.constants = constants
+
+        self.functions = functions
 
         # Convert formulas to conjunctive normal forms (clausal forms)
         self.clauses = []
@@ -53,7 +55,7 @@ class MarkovLogicNetwork(object):
 
     def ground_clauses(self):
         return [
-            (eval_atom(atom, dict(zip(xs, cs))), neg, [], w)
+            (eval_atom(atom, dict(zip(xs, cs)), self.functions), neg, [], w)
             for atoms, neg, xs, w in self.clauses
             for cs in product(self.constants, repeat=len(xs))
             for atom in atoms
@@ -67,11 +69,13 @@ class MarkovLogicNetwork(object):
 if __name__ == '__main__':
     mln = MarkovLogicNetwork(
             formulas = [
+                ('forall x P(f(x)) and forall y Q(y)', 0.1),
                 ('forall x y z (Friends(x, y) and Friends(y, z) => Friends(x, z))', 0.7),
                 ('forall x (not exists y Friends(x, y) => Smokes(x))', 2.3),
                 ('forall x (Smokes(x) => Cancer(x))', 1.5),
                 ('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))', 2.2)],
-            constants = ['Anna', 'Bob']
+            constants = ['Anna', 'Bob'],
+            functions = {'f': lambda x: 'Anna'},
             )
 
     print(mln.query('Cancer(Anna)', 'Smokes(Bob)'))
