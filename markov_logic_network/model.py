@@ -61,7 +61,7 @@ class MarkovLogicNetwork(object):
             for cs in product(self.constants, repeat=len(xs))
             ]
 
-    def query(self, f1, f2, method='exact'):
+    def query(self, f1, f2, method='simple'):
         f1 = parse(f1)
         f2 = parse(f2)
         return inference.methods[method](self, f1, f2)
