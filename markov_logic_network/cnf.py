@@ -1,4 +1,4 @@
-from parser import *
+from formula import *
 from itertools import product
 from functools import reduce
 

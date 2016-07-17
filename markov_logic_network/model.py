@@ -1,5 +1,5 @@
 from itertools import product
-from parser import *
+from formula import *
 import cnf
 import inference
 
