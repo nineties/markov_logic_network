@@ -5,14 +5,14 @@ from functools import reduce
 class InvalidFormula(Exception):
     'Invalid Logical Formula'
 
-def translate(f, C):
+def translate(f, w, C):
     f = remove_arrows(f)
     f = uniquify(f, [0], {})
     f = move_neg(f)
     f = remove_exists(f, C)
     f = remove_forall(f)
-    f = move_and(f)
-    return f
+    clauses = move_and(f)
+    return [(c, w/len(clauses)) for c in clauses]
 
 # Remove => and <=>
 def remove_arrows(f):
