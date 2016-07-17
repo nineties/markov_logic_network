@@ -62,10 +62,6 @@ def tokenize(s):
             break
     return tokens
 
-def parse(s):
-    tokens = tokenize(s)
-    print(tokens)
-
 def is_word(tok):
     return tok.isalnum() and tok not in ['not', 'forall', 'exists', 'and', 'or']
 
