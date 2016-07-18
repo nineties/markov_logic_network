@@ -277,7 +277,7 @@ Apply.__repr__ = formula_to_s
 # Evaluate variables or function calls with given assignments.
 # args: a map from variables to constants
 def eval_atom(atom, env, funcs):
-    return Atom(atom.pred, [eval_term(t, env, funcs) for t in atom.args])
+    return Atom(atom.pred, tuple(eval_term(t, env, funcs) for t in atom.args))
 
 def eval_term(term, env, funcs):
     if isinstance(term, str):
