@@ -33,7 +33,7 @@ def check_constants(constants):
 class MarkovLogicNetwork(object):
     def __init__(self, formulas, constants, functions={}):
         # Parse formulas
-        self.formulas = [(parse(f), w) for f, w in formulas]
+        self.formulas = [(parse_formula(f), w) for f, w in formulas]
 
         check_constants(constants)
         self.constants = constants

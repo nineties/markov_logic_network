@@ -140,7 +140,7 @@ def parse_formula1(tokens):
     t = lookahead(tokens)
     if t == '(':
         tokens.pop(0)
-        f = parse_formula(tokens)
+        f = parse_formula_(tokens)
         expect(tokens, ')')
         return f
     elif t == 'not':
@@ -170,7 +170,7 @@ def parse_formula2(tokens):
         else:
             return f1
 
-def parse_formula(tokens):
+def parse_formula_(tokens):
     f1 = parse_formula2(tokens)
     if lookahead(tokens) in ['=>', '<=>']:
         t = tokens.pop(0)
@@ -181,9 +181,9 @@ def parse_formula(tokens):
             return Equiv(f1, f2)
     return f1
 
-def parse(text):
+def parse_formula(text):
     tokens = tokenize(text)
-    f = parse_formula(tokens)
+    f = parse_formula_(tokens)
     if tokens:
         raise InvalidSyntax('Unexpected token: {}'.format(tokens[0]))
     return f
@@ -288,5 +288,5 @@ def eval_term(term, env, funcs):
         return f(*args)
 
 if __name__=='__main__':
-    print(parse('forall x (Smokes(x) => Cancer(x))'))
-    print(parse('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))'))
+    print(parse_formula('forall x (Smokes(x) => Cancer(x))'))
+    print(parse_formula('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))'))
