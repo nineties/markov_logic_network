@@ -1,5 +1,19 @@
-from io import StringIO
+"Syntax Tree for first order logic"
+
 from collections import namedtuple
+from io import StringIO
+
+def _eq_node(self, other):
+    return self.__class__ == other.__class__ and tuple.__eq__(self, other)
+def _ne_node(self, other):
+    return self.__class__ != other.__class__ or tuple.__ne__(self, other)
+
+def _node(name, fields):
+    klass = namedtuple(name, fields)
+    klass.__eq__ = _eq_node
+    klass.__ne__ = _ne_node
+    return klass
+
 
 # === Parser ===
 
