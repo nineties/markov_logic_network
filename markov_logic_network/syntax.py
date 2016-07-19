@@ -3,6 +3,8 @@
 from collections import namedtuple
 from io import StringIO
 
+# === A Class for Tree Nodes ===
+
 def _eq_node(self, other):
     return self.__class__ == other.__class__ and tuple.__eq__(self, other)
 def _ne_node(self, other):
@@ -13,6 +15,48 @@ def _node(name, fields):
     klass.__eq__ = _eq_node
     klass.__ne__ = _ne_node
     return klass
+
+# === Exceptions ===
+
+class LexError(Exception):
+    'Lexical Error'
+
+# === The Syntax ===
+
+from ply import lex
+
+tokens = (
+    'VARIABLE', 'CONSTANT', 'FLOAT',
+    'EQUIV', 'IMPLY', 'DOT', 'COMMA', 'LPAREN', 'RPAREN',
+)
+
+t_VARIABLE = r'[a-z][a-zA-Z0-9_]*'
+t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
+t_EQUIV = r'<=>'
+t_IMPLY = r'=>'
+t_DOT = r'\.'
+t_COMMA = r','
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_FLOAT = r'[+-]?[0-9]+\.([0-9]+)?([eE][+-]?[0-9]+)?'
+
+t_ignore = ' \t\r\n'
+
+def t_error(t):
+    raise LexError('Illegal character: {}'.format(t.value[0]))
+
+lex.lex()   # Build the lexer
+
+def tokenize(text):
+    lex.input(text)
+    while True:
+        tok = lex.token()
+        if not tok: break
+        yield tok
+
+# variable ::= an identifier starts with lower alphabet
+# constant ::= an identifier starts with upper alphabet
+# function ::= variable
 
 
 # === Parser ===
