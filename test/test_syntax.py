@@ -32,6 +32,14 @@ def test_lex_operator():
     assert(tokens[2].type == 'IMPLY')
     assert(tokens[3].type == 'EQUIV')
 
+def test_lex_reserved():
+    tokens = list(syntax.tokenize('not and or forall exists'))
+    assert(tokens[0].type == 'NOT')
+    assert(tokens[1].type == 'AND')
+    assert(tokens[2].type == 'OR')
+    assert(tokens[3].type == 'FORALL')
+    assert(tokens[4].type == 'EXISTS')
+
 @raises(syntax.LexError)
 def test_lex_error():
     list(syntax.tokenize('abcd;'))

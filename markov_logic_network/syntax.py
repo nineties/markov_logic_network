@@ -27,10 +27,19 @@ from ply import lex
 
 tokens = (
     'VARIABLE', 'CONSTANT', 'FLOAT',
+    'NOT', 'AND', 'OR', 'FORALL', 'EXISTS',
     'EQUIV', 'IMPLY', 'DOT', 'COMMA', 'LPAREN', 'RPAREN',
 )
 
-t_VARIABLE = r'[a-z][a-zA-Z0-9_]*'
+reserved = {
+    'not': 'NOT', 'and': 'AND', 'or': 'OR', 'forall': 'FORALL', 'exists': 'EXISTS'
+}
+
+def t_VARIABLE(t):
+    r'[a-z][a-zA-Z0-9_]*'
+    t.type = reserved.get(t.value, 'VARIABLE')
+    return t
+
 t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
 t_EQUIV = r'<=>'
 t_IMPLY = r'=>'
