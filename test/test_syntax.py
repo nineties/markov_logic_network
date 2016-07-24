@@ -8,6 +8,8 @@ from nose.tools import raises
 import syntax
 from syntax import *
 
+# === Parsing ===
+
 def test_node():
     A = syntax._node('A', 'x y')
     B = syntax._node('B', 'x y')
@@ -44,6 +46,11 @@ def test_lex_reserved():
 @raises(LexError)
 def test_lex_error():
     list(tokenize('abcd;'))
+
+def test_parse_term():
+    assert(parse_term('x') == 'x')
+    assert(parse_term('X') == 'X')
+    assert(parse_term('f(x,y,z)') == Apply('f', ('x', 'y', 'z')))
 
 def test_parse_atomic_formula():
     assert(parse_formula('P()') == Atom('P',()))

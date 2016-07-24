@@ -40,7 +40,7 @@ Apply = _node('Apply', 'fun args')
 from ply import lex
 
 tokens = (
-    'BEG_FORMULA',
+    'BEG_FORMULA', 'BEG_TERM',
     'VARIABLE', 'CONSTANT', 'FLOAT',
     'NOT', 'AND', 'OR', 'FORALL', 'EXISTS',
     'EQUIV', 'IMPLY', 'DOT', 'COMMA', 'LPAREN', 'RPAREN',
@@ -56,6 +56,7 @@ def t_VARIABLE(t):
     return t
 
 t_BEG_FORMULA = r'<FORMULA>'
+t_BEG_TERM = r'<TERM>'
 
 t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
 t_EQUIV = r'<=>'
@@ -83,7 +84,10 @@ def tokenize(text):
 from ply import yacc
 
 def p_start(p):
-    'start : BEG_FORMULA formula'
+    '''
+    start : BEG_FORMULA formula
+          | BEG_TERM term
+    '''
     p[0] = p[2]
 
 def p_formula(p):
