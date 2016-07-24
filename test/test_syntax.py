@@ -44,9 +44,8 @@ def test_lex_reserved():
     eq_(tokens[3].type, 'FORALL')
     eq_(tokens[4].type, 'EXISTS')
 
-@raises(LexError)
 def test_lex_error():
-    list(tokenize('abcd;'))
+    assert_raises(LexError, list, tokenize('abcd;'))
 
 def test_parse_term():
     eq_(parse_term('x'), 'x')

@@ -86,6 +86,12 @@ def tokenize(text):
 
 from ply import yacc
 
+def p_error(p):
+    if p:
+        raise ParserError('Syntax error at token: {}'.format(p.type))
+    else:
+        raise ParserError('Syntax error at EOF')
+
 def p_start(p):
     '''
     start : BEG_FORMULA formula
