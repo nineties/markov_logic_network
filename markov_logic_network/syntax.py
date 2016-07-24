@@ -21,11 +21,25 @@ def _node(name, fields):
 class LexError(Exception):
     'Lexical Error'
 
+class ParserError(Exception):
+    'Syntactical Error'
+
 # === The Syntax ===
+
+Imply = _node('Imply', 'f1 f2')
+Equiv = _node('Equiv', 'f1 f2')
+And = _node('And', 'f1 f2')
+Or = _node('Or', 'f1 f2')
+Forall = _node('Forall', 'xs f')
+Exists = _node('Exists', 'xs f')
+Not = _node('Not', 'f')
+Atom = _node('Atom', 'pred args')
+Apply = _node('Apply', 'fun args')
 
 from ply import lex
 
 tokens = (
+    'BEG_FORMULA',
     'VARIABLE', 'CONSTANT', 'FLOAT',
     'NOT', 'AND', 'OR', 'FORALL', 'EXISTS',
     'EQUIV', 'IMPLY', 'DOT', 'COMMA', 'LPAREN', 'RPAREN',
@@ -39,6 +53,8 @@ def t_VARIABLE(t):
     r'[a-z][a-zA-Z0-9_]*'
     t.type = reserved.get(t.value, 'VARIABLE')
     return t
+
+t_BEG_FORMULA = r'<FORMULA>'
 
 t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
 t_EQUIV = r'<=>'
@@ -63,198 +79,131 @@ def tokenize(text):
         if not tok: break
         yield tok
 
-# variable ::= an identifier starts with lower alphabet
-# constant ::= an identifier starts with upper alphabet
-# function ::= variable
+from ply import yacc
 
+def p_start(p):
+    'start : BEG_FORMULA formula'
+    p[0] = p[2]
 
-# === Parser ===
-
-# A parser for first order logic (FOL).
-
-# term ::= <variable>   (starts with lower alphabet)
-#        | <constants>  (starts with upper alphabet)
-#        | <variable> '(' <term> ',' ... ')'
-# atomic ::= <predicate> '(' <term> ',' ... ')' (predicate starts with upper alphabet)
-# formula1 ::= <atomic>
-#            | 'not' <formula1>
-#            | 'forall' <variable> ... <formula1>
-#            | 'exists' <variable> ... <formula1>
-#            | '(' <formula> ')'
-# formula2 ::= <formula1> ( ('and' | 'or') <formula1> )*
-# formula ::= <formula2>
-#           | <formula2> '=>' <formula2>
-#           | <formula2> '<=>' <formula2>
-
-Forall = namedtuple('Forall', 'xs f')
-Exists = namedtuple('Exists', 'xs f')
-Not = namedtuple('Not', 'f')
-And = namedtuple('And', 'f1 f2')
-Or = namedtuple('Or', 'f1 f2')
-Imply = namedtuple('Imply', 'f1 f2')
-Equiv = namedtuple('Equiv', 'f1 f2')
-Atom = namedtuple('Atom', 'pred args')
-Apply = namedtuple('Apply', 'fun args')
-
-class UnknownToken(Exception):
-    'Unknown Token Error'
-
-class InvalidSyntax(Exception):
-    'Invalid Syntax Error'
-
-def lex(s):
-    if s[0].isalpha():
-        for i in range(len(s)):
-            if not s[i].isalnum():
-                return s[:i], s[i:].lstrip()
-        return s, ''
-
-    if s[0] in '.,()':
-        return s[0], s[1:].lstrip()
-    elif s[:2] == '=>':
-        return '=>', s[2:].lstrip()
-    elif s[:3] == '<=>':
-        return '<=>', s[3:].lstrip()
+def p_formula(p):
+    '''
+    formula : secondary_formula
+            | secondary_formula IMPLY secondary_formula
+            | secondary_formula EQUIV secondary_formula
+    '''
+    if len(p) == 2:
+        p[0] = p[1]
+    elif p[2] == '=>':
+        p[0] = Imply(p[1], p[3])
     else:
-        raise UnknownToken(s[0])
+        p[0] = Equiv(p[1], p[3])
 
-def tokenize(s):
-    s = s.lstrip()
-
-    tokens = []
-    while True:
-        t, s = lex(s)
-        tokens.append(t)
-        if not s:
-            break
-    return tokens
-
-def is_word(tok):
-    return tok.isalnum() and tok not in ['not', 'forall', 'exists', 'and', 'or']
-
-def is_variable(tok):
-    return is_word(tok) and tok[0].islower()
-
-def is_constant(tok):
-    return is_word(tok) and tok[0].isupper()
-
-def expect(tokens, e):
-    if not tokens or tokens[0] != e:
-        raise InvalidSyntax('{} is expected'.format(e))
-    tokens.pop(0)
-
-def lookahead(tokens):
-    if tokens:
-        return tokens[0]
-
-def parse_variable(tokens):
-    if not is_variable(lookahead(tokens)):
-        raise InvalidSyntax('Variable symbol is expected')
-    return tokens.pop(0)
-
-def parse_constant(tokens):
-    if not is_constant(lookahead(tokens)):
-        raise InvalidSyntax('Constant symbol is expected')
-    return tokens.pop(0)
-
-def parse_term(tokens):
-    x = lookahead(tokens)
-    if not is_word(x):
-        raise InvalidSyntax('Variables, constants or function symbols are expected')
-    tokens.pop(0)
-    if is_variable(x) and lookahead(tokens) == '(':
-        tokens.pop(0)
-        if lookahead(tokens) == ')':
-            tokens.pop(0)
-            return Apply(x, [])
-
-        args = []
-        while True:
-            args.append(parse_term(tokens))
-            if lookahead(tokens) == ')':
-                tokens.pop(0)
-                return Apply(x, tuple(args))
-            expect(tokens, ',')
+def p_secondary_formula(p):
+    '''
+    secondary_formula : primary_formula
+                      | secondary_formula AND primary_formula
+                      | secondary_formula OR primary_formula
+    '''
+    if len(p) == 2:
+        p[0] = p[1]
+    elif p[2] == 'and':
+        p[0] = And(p[1], p[3])
     else:
-        return x
+        p[0] = Or(p[1], p[3])
 
-def parse_atomic(tokens):
-    p = parse_constant(tokens)
-    expect(tokens, '(')
-    if lookahead(tokens) == ')':
-        tokens.pop(0)
-        return Atom(p, [])
-    args = []
-    while True:
-        args.append(parse_term(tokens))
-        if lookahead(tokens) == ')':
-            tokens.pop(0)
-            return Atom(p, tuple(args))
-        expect(tokens, ',')
-
-def parse_variables(tokens):
-    xs = []
-    while True:
-        if is_variable(lookahead(tokens)):
-            xs.append(tokens.pop(0))
-        else:
-            break
-    if not xs:
-        raise InvalidSyntax('Variables are required: {}'.format(lookahead(tokens)))
-    return tuple(xs)
-
-def parse_formula1(tokens):
-    t = lookahead(tokens)
-    if t == '(':
-        tokens.pop(0)
-        f = parse_formula_(tokens)
-        expect(tokens, ')')
-        return f
-    elif t == 'not':
-        tokens.pop(0)
-        return Not(f=parse_formula1(tokens))
-    elif t in ['forall', 'exists']:
-        tokens.pop(0)
-        xs = parse_variables(tokens)
-        f = parse_formula1(tokens)
-        if t == 'forall':
-            return Forall(xs, f)
-        else:
-            return Exists(xs, f)
+def p_primary_formula(p):
+    '''
+    primary_formula : atomic_formula
+                    | NOT primary_formula
+                    | FORALL variables primary_formula
+                    | EXISTS variables primary_formula
+                    | LPAREN formula RPAREN
+    '''
+    if len(p) == 2:
+        p[0] = p[1]
+    elif p[1] == 'not':
+        p[0] = Not(p[2])
+    elif p[1] == 'forall':
+        p[0] = Forall(tuple(p[2]), p[3])
+    elif p[1] == 'exists':
+        p[0] = Exists(tuple(p[2]), p[3])
     else:
-        return parse_atomic(tokens)
+        p[0] = p[2]
 
-def parse_formula2(tokens):
-    f1 = parse_formula1(tokens)
-    while True:
-        if lookahead(tokens) in ['and', 'or']:
-            t = tokens.pop(0)
-            f2 = parse_formula1(tokens)
-            if t == 'and':
-                f1 = And(f1, f2)
-            else:
-                f1 = Or(f1, f2)
-        else:
-            return f1
+def p_atomic_formula(p):
+    'atomic_formula : predicate LPAREN terms RPAREN'
+    p[0] = Atom(p[1], tuple(p[3]))
 
-def parse_formula_(tokens):
-    f1 = parse_formula2(tokens)
-    if lookahead(tokens) in ['=>', '<=>']:
-        t = tokens.pop(0)
-        f2 = parse_formula2(tokens)
-        if t == '=>':
-            return Imply(f1, f2)
-        else:
-            return Equiv(f1, f2)
-    return f1
+def p_variables(p):
+    '''
+    variables : variable
+              | variable variables
+    '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[2]
+
+def p_terms(p):
+    '''
+    terms : 
+          | term
+          | term COMMA terms
+    '''
+    if len(p) == 1:
+        p[0] = []
+    elif len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+def p_params(p):
+    '''
+    params :
+           | term
+           | term COMMA params
+    '''
+    if len(p) == 1:
+        p[0] = []
+    elif len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+def p_term(p):
+    '''
+    term : variable
+         | constant
+         | function LPAREN params RPAREN
+    '''
+    if len(p) > 2:
+        p[0] = Apply(p[1], tuple(p[3]))
+    else:
+        p[0] = p[1]
+
+def p_variable(p):
+    'variable : VARIABLE'
+    p[0] = p[1]
+
+def p_constant(p):
+    'constant : CONSTANT'
+    p[0] = p[1]
+
+def p_predicate(p):
+    'predicate : CONSTANT'
+    p[0] = p[1]
+
+def p_function(p):
+    'function : VARIABLE'
+    p[0] = p[1]
+
+yacc.yacc() # Build the parser
 
 def parse_formula(text):
-    tokens = tokenize(text)
-    f = parse_formula_(tokens)
-    if tokens:
-        raise InvalidSyntax('Unexpected token: {}'.format(tokens[0]))
-    return f
+    return yacc.parse(t_BEG_FORMULA+' '+text)
 
+# === Pretty Printing ===
+"""
 # === Pretty Printing ===
 
 def formula_to_s(f):
@@ -329,15 +278,6 @@ def print_term(sio, t):
     else:
         sio.write(t)
 
-Forall.__repr__ = formula_to_s
-Exists.__repr__ = formula_to_s
-Not.__repr__ = formula_to_s
-And.__repr__ = formula_to_s
-Or.__repr__ = formula_to_s
-Imply.__repr__ = formula_to_s
-Equiv.__repr__ = formula_to_s
-Atom.__repr__ = formula_to_s
-Apply.__repr__ = formula_to_s
 
 # === Utilities ===
 
@@ -357,3 +297,4 @@ def eval_term(term, env, funcs):
 if __name__=='__main__':
     print(parse_formula('forall x (Smokes(x) => Cancer(x))'))
     print(parse_formula('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))'))
+"""
