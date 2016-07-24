@@ -239,7 +239,7 @@ def pp_primary_formula(f):
     if isinstance(f, Atom):
         return pp_atomic_formula(f)
     elif isinstance(f, Not):
-        return ['not ', pp_primary_formula(f)]
+        return ['not ', pp_primary_formula(f.f)]
     elif isinstance(f, Forall) or isinstance(f, Exists):
         qual = 'forall' if isinstance(f, Forall) else 'exists'
         return nest(INDENT, [
@@ -252,23 +252,23 @@ def pp_primary_formula(f):
 def pp_atomic_formula(f):
     return nest(INDENT, [
         f.pred, '(', nl(),
-        weave(map(pp_term, f.args), [',', nl(' ')]),
+        weave(map(pp_term, f.args), [',', nl()]),
         nl(), ')'])
 
 def pp_term(t):
     if isinstance(t, Apply):
         return nest(INDENT, [
             t.fun, '(', nl(),
-            weave(map(pp_term, t.args), [',', nl(' ')]),
+            weave(map(pp_term, t.args), [',', nl()]),
             nl(), ')'])
     else:
         return t
 
 def formula_to_s(f):
-    return pprint_s(pp_formula(f))
+    return pprint_s(breakable(pp_formula(f)))
 
 def term_to_s(t):
-    return pprint_s(pp_term(t))
+    return pprint_s(breakable(pp_term(t)))
 
 Imply.__repr__ = formula_to_s
 Equiv.__repr__ = formula_to_s

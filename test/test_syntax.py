@@ -83,3 +83,34 @@ def test_parse_formula():
     Q = Atom('Q', ())
     eq_(parse_formula('P() => Q()'), Imply(P, Q))
     eq_(parse_formula('P() <=> Q()'), Equiv(P, Q))
+
+# === Pretty Printing ===
+
+def test_print_term():
+    eq_(str(parse_term('x')), 'x')
+    eq_(str(parse_term('f(x,y,z)')), 'f(x,y,z)')
+    eq_(str(parse_term('f(x, y, z)')), 'f(x,y,z)')
+
+def test_print_atomic_formula():
+    eq_(str(parse_formula('P(x, y, z)')), 'P(x,y,z)')
+    eq_(str(parse_formula('P(f(a,b),x,y,z)')),'P(f(a,b),x,y,z)')
+
+def test_print_primary_formula():
+    eq_(str(parse_formula('not P()')), 'not P()')
+    eq_(str(parse_formula('forall x y P(x, y)')), 'forall x y P(x,y)')
+    eq_(str(parse_formula('exists x y P(x, y)')), 'exists x y P(x,y)')
+    eq_(str(parse_formula('not (P() => Q())')), 'not (P() => Q())')
+
+def test_print_secomdary_formula():
+    eq_(str(parse_formula('P() and Q()')), 'P() and Q()')
+    eq_(str(parse_formula('P() and Q() and R()')), 'P() and Q() and R()')
+    eq_(str(parse_formula('P() and (Q() and R())')), 'P() and (Q() and R())')
+    eq_(str(parse_formula('P() or Q()')), 'P() or Q()')
+    eq_(str(parse_formula('P() or Q() or R()')), 'P() or Q() or R()')
+    eq_(str(parse_formula('P() or (Q() or R())')), 'P() or (Q() or R())')
+
+def test_print_formula():
+    eq_(str(parse_formula('P() => Q()')), 'P() => Q()')
+    eq_(str(parse_formula('P() <=> Q()')), 'P() <=> Q()')
+    eq_(str(parse_formula('P() => Q() and R()')), 'P() => Q() and R()')
+    eq_(str(parse_formula('P() => (Q() => R())')), 'P() => (Q() => R())')
