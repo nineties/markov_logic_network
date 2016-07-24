@@ -3,7 +3,7 @@ import os
 libpath = os.path.join(os.path.dirname(__file__), '../markov_logic_network')
 sys.path.append(libpath)
 
-from nose.tools import raises, eq_, ok_
+from nose.tools import assert_raises, eq_, ok_
 from nose.tools import assert_not_equal as ne_
 
 import syntax
@@ -114,3 +114,21 @@ def test_print_formula():
     eq_(str(parse_formula('P() <=> Q()')), 'P() <=> Q()')
     eq_(str(parse_formula('P() => Q() and R()')), 'P() => Q() and R()')
     eq_(str(parse_formula('P() => (Q() => R())')), 'P() => (Q() => R())')
+
+def test_parser_error():
+    assert_raises(ParserError, parse_formula, 'P() =>')
+    assert_raises(ParserError, parse_formula, 'P() => x')
+    assert_raises(ParserError, parse_formula, 'P() => Q() <=> R()')
+    assert_raises(ParserError, parse_formula, 'forall P()')
+    assert_raises(ParserError, parse_formula, 'P(x,y,')
+
+# === Evaluation ===
+
+def test_eval():
+    eq_(eval_term({'x': 'A'}, ['A'], parse_term('x')), 'A')
+    eq_(eval_term({'f': lambda : 'A'}, ['A'], parse_term('f()')), 'A')
+    eq_(eval_term({'f': lambda x: x}, ['A'], parse_term('f(A)')), 'A')
+
+def test_eval_error():
+    assert_raises(EvaluationError, eval_term, {'x': 'y'}, ['A'], parse_term('x'))
+    assert_raises(EvaluationError, eval_term, {'x': 'B'}, ['A'], parse_term('x'))

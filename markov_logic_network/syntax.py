@@ -25,6 +25,9 @@ class LexError(Exception):
 class ParserError(Exception):
     'Syntactical Error'
 
+class EvaluationError(Exception):
+    'Evaluation Error'
+
 # === The Syntax ===
 
 Imply = _node('Imply', 'f1 f2')
@@ -280,23 +283,14 @@ Not.__repr__ = formula_to_s
 Atom.__repr__ = formula_to_s
 Apply.__repr__ = term_to_s
 
-"""
-# === Utilities ===
+# === Evaluation ===
 
-# Evaluate variables or function calls with given assignments.
-# args: a map from variables to constants
-def eval_atom(atom, env, funcs):
-    return Atom(atom.pred, tuple(eval_term(t, env, funcs) for t in atom.args))
-
-def eval_term(term, env, funcs):
+def eval_term(env, C, term):
     if isinstance(term, str):
-        return env[term] if is_variable(term) else term
+        r = env.get(term, term)
     else:
-        f = eval(term.fun, {}, funcs)
-        args = [eval_term(t, env, funcs) for t in term.args]
-        return f(*args)
-
-if __name__=='__main__':
-    print(parse_formula('forall x (Smokes(x) => Cancer(x))'))
-    print(parse_formula('forall x y (Friends(x, y) => (Smokes(x) <=> Smokes(y)))'))
-"""
+        args = [eval_term(env, C, t) for t in term.args]
+        r = env[term.fun](*args)
+    if r not in C:
+        raise EvaluationError('Not a constant value: {}'.format(r))
+    return r
