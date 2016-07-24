@@ -1,5 +1,6 @@
 "Syntax Tree for first order logic"
 
+from pprinter import *
 from collections import namedtuple
 from io import StringIO
 
@@ -202,83 +203,80 @@ yacc.yacc() # Build the parser
 def parse_formula(text):
     return yacc.parse(t_BEG_FORMULA+' '+text)
 
+def parse_term(text):
+    return yacc.parse(t_BEG_TERM+' '+text)
+
+INDENT = 4
+
 # === Pretty Printing ===
-"""
-# === Pretty Printing ===
+def pp_formula(f):
+    if isinstance(f, Imply) or isinstance(f, Equiv):
+        op = '=>' if isinstance(f, Imply) else '<=>'
+        return nest(INDENT, [
+            pp_secondary_formula(f.f1),
+            nl(' '), op, nl(' '),
+            pp_secondary_formula(f.f2)
+            ])
+    else:
+        return pp_secondary_formula(f)
+
+def pp_secondary_formula(f):
+    if isinstance(f, And) or isinstance(f, Or):
+        op = 'and' if isinstance(f, And) else 'or'
+        return nest(INDENT, [
+            pp_secondary_formula(f.f1),
+            nl(' '), op, nl(' '),
+            pp_primary_formula(f.f2)
+            ])
+    else:
+        return pp_primary_formula(f)
+
+def pp_primary_formula(f):
+    if isinstance(f, Atom):
+        return pp_atomic_formula(f)
+    elif isinstance(f, Not):
+        return ['not ', pp_primary_formula(f)]
+    elif isinstance(f, Forall) or isinstance(f, Exists):
+        qual = 'forall' if isinstance(f, Forall) else 'exists'
+        return nest(INDENT, [
+            qual, ' ', weave(f.xs, ' '), nl(' '),
+            pp_primary_formula(f.f)
+            ])
+    else:
+        return nest(INDENT, ['(', nl(), pp_formula(f), nl(), ')'])
+
+def pp_atomic_formula(f):
+    return nest(INDENT, [
+        f.pred, '(', nl(),
+        weave(map(pp_term, f.args), [',', nl(' ')]),
+        nl(), ')'])
+
+def pp_term(t):
+    if isinstance(t, Apply):
+        return nest(INDENT, [
+            t.fun, '(', nl(),
+            weave(map(pp_term, t.args), [',', nl(' ')]),
+            nl(), ')'])
+    else:
+        return t
 
 def formula_to_s(f):
-    sio = StringIO()
-    print_formula(sio, f)
-    return sio.getvalue()
+    return pprint_s(pp_formula(f))
 
-def print_formula(sio, f):
-    assert(f)
-    if isinstance(f, Imply):
-        print_formula2(sio, f.f1)
-        sio.write(' => ')
-        print_formula2(sio, f.f2)
-    elif isinstance(f, Equiv):
-        print_formula2(sio, f.f1)
-        sio.write(' <=> ')
-        print_formula2(sio, f.f2)
-    else:
-        print_formula2(sio, f)
+def term_to_s(t):
+    return pprint_s(pp_term(t))
 
-def print_formula2(sio, f):
-    if isinstance(f, And):
-        print_formula1(sio, f.f1)
-        sio.write(' and ')
-        print_formula1(sio, f.f2)
-    elif isinstance(f, Or):
-        print_formula1(sio, f.f1)
-        sio.write(' or ')
-        print_formula1(sio, f.f2)
-    else:
-        print_formula1(sio, f)
+Imply.__repr__ = formula_to_s
+Equiv.__repr__ = formula_to_s
+And.__repr__ = formula_to_s
+Or.__repr__ = formula_to_s
+Forall.__repr__ = formula_to_s
+Exists.__repr__ = formula_to_s
+Not.__repr__ = formula_to_s
+Atom.__repr__ = formula_to_s
+Apply.__repr__ = term_to_s
 
-def print_formula1(sio, f):
-    if isinstance(f, Not):
-        sio.write('not ')
-        print_formula1(sio, f.f)
-    elif isinstance(f, Forall):
-        sio.write('forall ')
-        sio.write(' '.join(f.xs))
-        sio.write(' ')
-        print_formula1(sio, f.f)
-    elif isinstance(f, Exists):
-        sio.write('exists ')
-        sio.write(' '.join(f.xs))
-        sio.write(' ')
-        print_formula1(sio, f.f)
-    elif isinstance(f, Atom):
-        print_atomic(sio, f)
-    else:
-        sio.write('(')
-        print_formula(sio, f)
-        sio.write(')')
-
-def print_atomic(sio, f):
-    sio.write(f.pred)
-    sio.write('(')
-    for i, a in enumerate(f.args):
-        print_term(sio, a)
-        if i < len(f.args)-1:
-            sio.write(', ')
-    sio.write(')')
-
-def print_term(sio, t):
-    if isinstance(t, Apply):
-        sio.write(t.fun)
-        sio.write('(')
-        for i, a in enumerate(t.args):
-            print_term(sio, a)
-            if i < len(t.args)-1:
-                sio.write(', ')
-        sio.write(')')
-    else:
-        sio.write(t)
-
-
+"""
 # === Utilities ===
 
 # Evaluate variables or function calls with given assignments.
