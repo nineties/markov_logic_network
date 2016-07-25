@@ -9,6 +9,7 @@ def conjunctive_normal_form(f, C):
     f: a formula of first order logic.
     C: list of constants
     '''
+    f = _uniquify(f, [0])
     f = _remove_arrows(f)
 
 def disjunctive_normal_form(f, C):
@@ -18,7 +19,31 @@ def disjunctive_normal_form(f, C):
     f: a formula of first order logic.
     C: list of constants
     '''
+    f = _uniquify(f, [0])
     f = _remove_arrows(f)
+
+def _uniquify(f, n, d={}):
+    'Uniquify bound variables'
+    if isinstance(f, Forall) or isinstance(f, Exists):
+        d = d.copy()
+        for x in f.xs:
+            d[x] = 'x' + str(n[0])
+            n[0] += 1
+        return f._replace(xs=tuple(d[x] for x in f.xs), f=_uniquify(f.f, n, d))
+    elif isinstance(f, Not):
+        return Not(_uniquify(f.f, n, d))
+    elif isinstance(f, And) or isinstance(f, Or):
+        return f._replace(f1=_uniquify(f.f1, n, d), f2=_uniquify(f.f2, n, d))
+    elif isinstance(f, Atom):
+        return Atom(f.pred, tuple(_rename_term(t, d) for t in f.args))
+    return f
+
+def _rename_term(t, d):
+    'Substitute variables using given map d'
+    if isinstance(t, str):
+        return d.get(t, t)
+    else:
+        return Apply(t.fun, tuple(_rename_term(t, d) for t in t.args))
 
 def _remove_arrows(f):
     "Remove '=>' and '<=>' from given formula"
@@ -106,14 +131,7 @@ def rename(f, d):
         return f.__class__(rename(f.f1, d), rename(f.f2, d))
     else:
         assert(isinstance(f, Atom))
-        return Atom(f.pred, tuple(rename_term(t, d) for t in f.args))
-
-def rename_term(t, d):
-    if isinstance(t, str):
-        return d.get(t, t)
-    else:
-        assert(isinstance(t, Apply))
-        return Apply(t.fun, tuple(rename_term(t, d) for t in t.args))
+        return Atom(f.pred, tuple(_rename_term(t, d) for t in f.args))
 
 # Move negation inwards
 def move_neg(f):
