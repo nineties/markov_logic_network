@@ -1,4 +1,4 @@
-"Syntax Tree for first order logic"
+'Syntax Tree for first order logic'
 
 from pprinter import *
 from collections import namedtuple
