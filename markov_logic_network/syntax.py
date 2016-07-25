@@ -4,6 +4,12 @@ from pprinter import *
 from collections import namedtuple
 from io import StringIO
 
+__all__ = [
+    'LexError', 'ParserError', 'EvaluationError',
+    'Imply', 'Equiv', 'And', 'Or', 'Forall', 'Exists', 'Not', 'Atom', 'Apply',
+    'tokenize', 'parse_formula', 'parse_term', 'eval_term'
+    ]
+
 # === A Class for Tree Nodes ===
 
 def _eq_node(self, other):
