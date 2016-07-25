@@ -1,3 +1,42 @@
+'Translators from FOL formula to CNF or DNF'
+
+from syntax import *
+
+def conjunctive_normal_form(f, C):
+    '''
+    Translate given formula to conjunctive normal form.
+
+    f: a formula of first order logic.
+    C: list of constants
+    '''
+    f = _remove_arrows(f)
+
+def disjunctive_normal_form(f, C):
+    '''
+    Translate given formula to disjunctive normal form.
+
+    f: a formula of first order logic.
+    C: list of constants
+    '''
+    f = _remove_arrows(f)
+
+def _remove_arrows(f):
+    "Remove '=>' and '<=>' from given formula"
+    if isinstance(f, Forall) or isinstance(f, Exists):
+        return f._replace(f=_remove_arrows(f.f))
+    elif isinstance(f, Not):
+        return f._replace(f=_remove_arrows(f.f))
+    elif isinstance(f, And) or isinstance(f, Or):
+        return f._replace(f1=_remove_arrows(f.f1), f2=_remove_arrows(f.f2))
+    if isinstance(f, Imply):
+        return Or(Not(_remove_arrows(f.f1)), _remove_arrows(f.f2))
+    elif isinstance(f, Equiv):
+        return And(Or(Not(_remove_arrows(f.f1)), _remove_arrows(f.f2)),
+                   Or(_remove_arrows(f.f1), Not(_remove_arrows(f.f2))))
+    else:
+        return f
+
+"""
 from syntax import *
 from itertools import product
 from functools import reduce
