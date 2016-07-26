@@ -74,7 +74,6 @@ Apply = _node('Apply', 'fun args')
 from ply import lex
 
 tokens = (
-    'BEG_MLN', 'BEG_FORMULA', 'BEG_TERM',
     'VARIABLE', 'CONSTANT', 'FLOAT',
     'NOT', 'AND', 'OR', 'FORALL', 'EXISTS',
     'EQUIV', 'IMPLY', 'COLON', 'COMMA', 'LPAREN', 'RPAREN',
@@ -88,10 +87,6 @@ def t_VARIABLE(t):
     r'[a-z][a-zA-Z0-9_]*'
     t.type = reserved.get(t.value, 'VARIABLE')
     return t
-
-t_BEG_MLN = r'<MLN>'
-t_BEG_FORMULA = r'<FORMULA>'
-t_BEG_TERM = r'<TERM>'
 
 t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
 t_EQUIV = r'<=>'
@@ -123,14 +118,6 @@ def p_error(p):
         raise ParserError('Syntax error at token: {}'.format(p.type))
     else:
         raise ParserError('Syntax error at EOF')
-
-def p_start(p):
-    '''
-    start : BEG_MLN mln
-          | BEG_FORMULA formula
-          | BEG_TERM term
-    '''
-    p[0] = p[2]
 
 def p_mln(p):
     '''
@@ -268,16 +255,20 @@ def p_function(p):
     'function : VARIABLE'
     p[0] = p[1]
 
-yacc.yacc() # Build the parser
+# Build the parsers
+
+_mln_parser = yacc.yacc(start='mln')
+_formula_parser = yacc.yacc(start='formula')
+_term_parser = yacc.yacc(start='term')
 
 def parse_mln(text):
-    return yacc.parse(t_BEG_MLN+' '+text)
+    return _mln_parser.parse(text)
 
 def parse_formula(text):
-    return yacc.parse(t_BEG_FORMULA+' '+text)
+    return _formula_parser.parse(text)
 
 def parse_term(text):
-    return yacc.parse(t_BEG_TERM+' '+text)
+    return _term_parser.parse(text)
 
 INDENT = 4
 
