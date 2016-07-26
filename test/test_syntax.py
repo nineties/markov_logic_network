@@ -83,6 +83,20 @@ def test_parse_formula():
     eq_(parse_formula('P() => Q()'), Imply(P, Q))
     eq_(parse_formula('P() <=> Q()'), Equiv(P, Q))
 
+def test_parse_mln():
+    code = '''
+    forall x P(x)   :   0.1
+    Q(x) => R(x)    :   -1.0
+    not F(x)
+    G(x) <=> H(x)   :   1e-2
+    '''
+    mln = parse_mln(code)
+    eq_(mln[0], (parse_formula('forall x P(x)'), 0.1))
+    eq_(mln[1], (parse_formula('Q(x) => R(x)'), -1.0))
+    eq_(mln[2], (parse_formula('not F(x)'), 0))
+    eq_(mln[3], (parse_formula('G(x) <=> H(x)'), 0.01))
+
+
 # === Pretty Printing ===
 
 def test_print_term():

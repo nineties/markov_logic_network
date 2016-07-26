@@ -7,7 +7,7 @@ from io import StringIO
 __all__ = [
     'LexError', 'ParserError', 'EvaluationError',
     'Imply', 'Equiv', 'And', 'Or', 'Forall', 'Exists', 'Not', 'Atom', 'Apply',
-    'tokenize', 'parse_formula', 'parse_term', 'eval_term'
+    'tokenize', 'parse_mln', 'parse_formula', 'parse_term', 'eval_term'
     ]
 
 # === A Class for Tree Nodes ===
@@ -74,10 +74,10 @@ Apply = _node('Apply', 'fun args')
 from ply import lex
 
 tokens = (
-    'BEG_FORMULA', 'BEG_TERM',
+    'BEG_MLN', 'BEG_FORMULA', 'BEG_TERM',
     'VARIABLE', 'CONSTANT', 'FLOAT',
     'NOT', 'AND', 'OR', 'FORALL', 'EXISTS',
-    'EQUIV', 'IMPLY', 'DOT', 'COMMA', 'LPAREN', 'RPAREN',
+    'EQUIV', 'IMPLY', 'COLON', 'COMMA', 'LPAREN', 'RPAREN',
 )
 
 reserved = {
@@ -89,17 +89,18 @@ def t_VARIABLE(t):
     t.type = reserved.get(t.value, 'VARIABLE')
     return t
 
+t_BEG_MLN = r'<MLN>'
 t_BEG_FORMULA = r'<FORMULA>'
 t_BEG_TERM = r'<TERM>'
 
 t_CONSTANT = r'[A-Z][a-zA-Z0-9_]*'
 t_EQUIV = r'<=>'
 t_IMPLY = r'=>'
-t_DOT = r'\.'
+t_COLON = r':'
 t_COMMA = r','
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_FLOAT = r'[+-]?[0-9]+\.([0-9]+)?([eE][+-]?[0-9]+)?'
+t_FLOAT = r'[+-]?[0-9]+(\.([0-9]+)?)?([eE][+-]?[0-9]+)?'
 
 t_ignore = ' \t\r\n'
 
@@ -125,10 +126,35 @@ def p_error(p):
 
 def p_start(p):
     '''
-    start : BEG_FORMULA formula
+    start : BEG_MLN mln
+          | BEG_FORMULA formula
           | BEG_TERM term
     '''
     p[0] = p[2]
+
+def p_mln(p):
+    '''
+    mln : mln_entry
+        | mln_entry mln
+    '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[2]
+
+def p_mln_entry(p):
+    '''
+    mln_entry : formula COLON float
+              | formula
+    '''
+    if len(p) == 2:
+        p[0] = (p[1], 0.0)
+    else:
+        p[0] = (p[1], p[3])
+
+def p_float(p):
+    'float : FLOAT'
+    p[0] = float(p[1])
 
 def p_formula(p):
     '''
@@ -243,6 +269,9 @@ def p_function(p):
     p[0] = p[1]
 
 yacc.yacc() # Build the parser
+
+def parse_mln(text):
+    return yacc.parse(t_BEG_MLN+' '+text)
 
 def parse_formula(text):
     return yacc.parse(t_BEG_FORMULA+' '+text)
