@@ -4,6 +4,8 @@ from syntax import *
 from itertools import product
 from functools import reduce
 
+__all__ = ['ConjunctiveNormalForm', 'DisjunctiveNormalForm']
+
 class ConjunctiveNormalForm(object):
     def __init__(self, formula, constants):
         self.original = formula
