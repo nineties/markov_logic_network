@@ -13,14 +13,39 @@ __all__ = [
 # === A Class for Tree Nodes ===
 
 def _eq_node(self, other):
-    return self.__class__ == other.__class__ and tuple.__eq__(self, other)
+    return type(self) == type(other) and tuple.__eq__(self, other)
+
 def _ne_node(self, other):
-    return self.__class__ != other.__class__ or tuple.__ne__(self, other)
+    return not _eq_node(self, other)
+
+def _gt_node(self, other):
+    n1 = type(self).__name__
+    n2 = type(other).__name__
+    return n1 > n2 or (n1 == n2 and tuple.__gt__(self, other))
+
+def _ge_node(self, other):
+    n1 = type(self).__name__
+    n2 = type(other).__name__
+    return n1 >= n2 or (n1 == n2 and tuple.__ge__(self, other))
+
+def _lt_node(self, other):
+    n1 = type(self).__name__
+    n2 = type(other).__name__
+    return n1 < n2 or (n1 == n2 and tuple.__lt__(self, other))
+
+def _le_node(self, other):
+    n1 = type(self).__name__
+    n2 = type(other).__name__
+    return n1 <= n2 or (n1 == n2 and tuple.__le__(self, other))
 
 def _node(name, fields):
     klass = namedtuple(name, fields)
     klass.__eq__ = _eq_node
     klass.__ne__ = _ne_node
+    klass.__gt__ = _gt_node
+    klass.__ge__ = _ge_node
+    klass.__lt__ = _lt_node
+    klass.__le__ = _le_node
     return klass
 
 # === Exceptions ===
