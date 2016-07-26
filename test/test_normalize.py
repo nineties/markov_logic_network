@@ -19,10 +19,10 @@ def test_remove_arrows():
     eq_(n._remove_arrows(f('exists x (P() => Q())')), f('exists x (not P() or Q())'))
     eq_(n._remove_arrows(f('P() <=> Q()')), f('(not P() or Q()) and (P() or not Q())'))
 
-def test_rename_term():
-    eq_(n._rename_term(t('x'), {'x': 'A'}), t('A'))
-    eq_(n._rename_term(t('B'), {'x': 'A'}), t('B'))
-    eq_(n._rename_term(t('f(x)'), {'x': 'A'}), t('f(A)'))
+def test_assign_term():
+    eq_(n._assign_term(t('x'), {'x': 'A'}), t('A'))
+    eq_(n._assign_term(t('B'), {'x': 'A'}), t('B'))
+    eq_(n._assign_term(t('f(x)'), {'x': 'A'}), t('f(A)'))
 
 def test_uniquify():
     eq_(n._uniquify(f('forall x P(x)'),[0]), f('forall x0 P(x0)'))

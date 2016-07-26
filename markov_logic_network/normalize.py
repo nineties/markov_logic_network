@@ -37,15 +37,25 @@ def _uniquify(f, n, d={}):
     elif isinstance(f, And) or isinstance(f, Or):
         return f._replace(f1=_uniquify(f.f1, n, d), f2=_uniquify(f.f2, n, d))
     elif isinstance(f, Atom):
-        return Atom(f.pred, tuple(_rename_term(t, d) for t in f.args))
+        return Atom(f.pred, tuple(_assign_term(t, d) for t in f.args))
     return f
 
-def _rename_term(t, d):
+def _assign_term(t, d):
     'Substitute variables using given map d'
     if isinstance(t, str):
         return d.get(t, t)
     else:
-        return Apply(t.fun, tuple(_rename_term(t, d) for t in t.args))
+        return Apply(t.fun, tuple(_assign_term(t, d) for t in t.args))
+
+def _assign(f, d):
+    if isinstance(f, Forall) or isinstance(f, Exists):
+        return f.__class__(f.xs, _assign(f.f, d))
+    elif isinstance(f, Not):
+        return Not(_assign(f.f, d))
+    elif isinstance(f, And) or isinstance(f, Or):
+        return f.__class__(_assign(f.f1, d), _assign(f.f2, d))
+    else:
+        return Atom(f.pred, tuple(_assign_term(t, d) for t in f.args))
 
 def _remove_arrows(f):
     "Remove '=>' and '<=>' from given formula"
