@@ -33,3 +33,11 @@ def test_uniquify():
     eq_(n._uniquify(f('forall x y P(x, A, y)'),[0]), f('forall x0 x1 P(x0, A, x1)'))
     eq_(n._uniquify(f('forall x exists y P(x, y)'),[0]), f('forall x0 exists x1 P(x0, x1)'))
     eq_(n._uniquify(f('forall x P(f(x))'),[0]), f('forall x0 P(f(x0))'))
+
+def test_move_neg():
+    eq_(n._move_neg(f('not P()')), f('not P()'))
+    eq_(n._move_neg(f('not not P()')), f('P()'))
+    eq_(n._move_neg(f('not (P() and Q())')), f('not P() or not Q()'))
+    eq_(n._move_neg(f('not (P() or Q())')), f('not P() and not Q()'))
+    eq_(n._move_neg(f('not forall x P(x)')), f('exists x not P(x)'))
+    eq_(n._move_neg(f('not exists x P(x)')), f('forall x not P(x)'))

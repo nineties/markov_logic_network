@@ -11,6 +11,7 @@ def conjunctive_normal_form(f, C):
     '''
     f = _uniquify(f, [0])
     f = _remove_arrows(f)
+    f = _move_neg(f)
 
 def disjunctive_normal_form(f, C):
     '''
@@ -21,6 +22,7 @@ def disjunctive_normal_form(f, C):
     '''
     f = _uniquify(f, [0])
     f = _remove_arrows(f)
+    f = _move_neg(f)
 
 def _uniquify(f, n, d={}):
     'Uniquify bound variables'
@@ -60,6 +62,28 @@ def _remove_arrows(f):
                    Or(_remove_arrows(f.f1), Not(_remove_arrows(f.f2))))
     else:
         return f
+
+def _move_neg(f):
+    'Move negation operator inwards'
+    if isinstance(f, Forall) or isinstance(f, Exists):
+        return f._replace(f=_move_neg(f.f))
+    elif isinstance(f, And) or isinstance(f, Or):
+        return f._replace(f1=_move_neg(f.f1), f2=_move_neg(f.f2))
+    elif isinstance(f, Atom):
+        return f
+    elif isinstance(f.f, Forall):
+        return Exists(f.f.xs, _move_neg(Not(f.f.f)))
+    elif isinstance(f.f, Exists):
+        return Forall(f.f.xs, _move_neg(Not(f.f.f)))
+    elif isinstance(f.f, Not):
+        return _move_neg(f.f.f)
+    elif isinstance(f.f, And):
+        return Or(_move_neg(Not(f.f.f1)), _move_neg(Not(f.f.f2)))
+    elif isinstance(f.f, Or):
+        return And(_move_neg(Not(f.f.f1)), _move_neg(Not(f.f.f2)))
+    else:
+        return f
+
 
 """
 from syntax import *
